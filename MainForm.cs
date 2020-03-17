@@ -54,7 +54,7 @@ namespace LIMSCodeBarPrinter
 
         private void btnPrint_Click(object sender, EventArgs e)
         {
-            var url = $"http://10.74.22.2/api/lism/samples_by_order/{this.tbOrder.Text}/";
+            var url = $"http://10.74.22.2/api/lism/samples_by_order/{this.tbOrder.Text.Trim()}/";
             var request = WebRequest.Create(url);
             request.ContentType = "application/json; charset=utf-8";
             var response = (HttpWebResponse) request.GetResponse();
