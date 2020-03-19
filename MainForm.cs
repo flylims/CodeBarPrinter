@@ -81,24 +81,25 @@ namespace LIMSCodeBarPrinter
         {
             var zplString =
                 $"^XA^FO40,50^BY2^B3N,,100,Y,N^FD{label.ids}^FS^CFA,15^FO0,15^FB368,0,16,C,0^FD{label.biom}^FS^XZ";
+            
+            TcpClient client = new TcpClient();
             try
             {
-                // Open connection
-                TcpClient client = new TcpClient();
                 client.Connect(PrinterIpAddress, PrinterIpPort);
 
-                // Write ZPL String to connection
                 var writer = new StreamWriter(client.GetStream());
                 writer.Write(zplString);
                 writer.Flush();
 
-                // Close Connection
                 writer.Close();
-                client.Close();
             }
             catch (Exception ex)
             {
                 tbLog.Text = $@"Произошла ошибка отправки данных на принтер:{Environment.NewLine}{ex.Message}";
+            }
+            finally
+            {
+                client.Close();
             }
         }
     }
