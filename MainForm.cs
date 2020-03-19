@@ -48,8 +48,12 @@ namespace LIMSCodeBarPrinter
 
         private void port_DataReceived(object sender, SerialDataReceivedEventArgs e)
         {
-            this.tbOrder.Text = _port.ReadExisting();
-            btnPrint_Click(sender, null);
+            var message = _port.ReadExisting();
+            if (message.Length < 20)
+            {
+                this.tbOrder.Text = message;
+                btnPrint_Click(sender, null);
+            }
         }
 
         private void btnPrint_Click(object sender, EventArgs e)
@@ -63,7 +67,16 @@ namespace LIMSCodeBarPrinter
             {
                 this.tbLog.Text = "";
                 var json = sr.ReadToEnd();
-                List<CodeBar> codeBars = JsonConvert.DeserializeObject<List<CodeBar>>(json);
+                List<CodeBar> codeBars = new List<CodeBar>();
+                try
+                {
+                    codeBars = JsonConvert.DeserializeObject<List<CodeBar>>(json);
+                }
+                catch (Exception exception)
+                {
+                    // ignored
+                }
+
                 if (codeBars.Count == 0)
                 {
                     this.tbLog.Text = @"Заказ не найден в ЛИС";
@@ -80,7 +93,7 @@ namespace LIMSCodeBarPrinter
         private void printBarCode(CodeBar label)
         {
             var zplString =
-                $"^XA^FO40,50^BY2^B3N,,100,Y,N^FD{label.ids}^FS^CFA,15^FO0,15^FB368,0,16,C,0^FD{label.biom}^FS^XZ";
+                $"^XA^LS0^FO30,50^BY2^B3N,,100,Y,N^FD{label.ids}^FS^CFA,15^FO0,15^FB358,0,16,C,0^FD{label.biom}^FS^XZ";
             
             TcpClient client = new TcpClient();
             try
