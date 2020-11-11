@@ -92,16 +92,16 @@ namespace LIMSCodeBarPrinter
 
         private void printBarCode(CodeBar label)
         {
-            var zplString =
-                $"^XA^LS0^FO30,50^BY2^B3N,,100,Y,N^FD{label.ids}^FS^CFA,15^FO0,15^FB358,0,16,C,0^FD{label.biom}^FS^XZ";
-            
+            const string template = "^Q25,2\n^W46\n^H8\n^P1\n^S7\n^AD\n^C1\n^R0\n~Q+0\n^O0\n^D0\n^E18\n~R255\n" +
+                                    "^L\nDy2-me-dd\nTh:m:s\nBA3,23,84,3,5,80,0,3,{0}\nAD,20,20,1,1,0,0E,{1}\nE\n";
+
             TcpClient client = new TcpClient();
             try
             {
                 client.Connect(PrinterIpAddress, PrinterIpPort);
 
                 var writer = new StreamWriter(client.GetStream());
-                writer.Write(zplString);
+                writer.Write(template, label.ids, label.biom);
                 writer.Flush();
 
                 writer.Close();
