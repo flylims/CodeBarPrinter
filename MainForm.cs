@@ -50,11 +50,9 @@ namespace LIMSCodeBarPrinter
         private void DataReceived(object sender, SerialDataReceivedEventArgs e)
         {
             var message = _port.ReadExisting();
-            if (message.Length < 20)
-            {
-                this.tbOrder.Text = message;
-                BtnPrintClick(sender, null);
-            }
+            if (message.Length >= 20) return;
+            this.tbOrder.Text = message;
+            BtnPrintClick(sender, null);
         }
 
         private void BtnPrintClick(object sender, EventArgs e)
