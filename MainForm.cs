@@ -93,7 +93,7 @@ namespace LIMSCodeBarPrinter
         private void PrintBarCode(CodeBar label)
         {
             const string template = "^Q25,2\n^W46\n^H8\n^P1\n^S7\n^AD\n^C1\n^R0\n~Q+0\n^O0\n^D0\n^E18\n~R255\n" +
-                                    "^L\nDy2-me-dd\nTh:m:s\nBA3,33,86,2,5,80,0,3,{0}\nAD,33,20,1,1,0,0,{1}\nE\n";
+                                    "^L\nDy2-me-dd\nTh:m:s\nBA3,40,86,2,5,80,0,3,{0}\nAD,40,20,1,1,0,0,{1}\nE\n";
 
             TcpClient client = new TcpClient();
             try
