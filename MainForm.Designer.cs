@@ -87,7 +87,6 @@ namespace LIMSCodeBarPrinter
             this.tbLog.ReadOnly = true;
             this.tbLog.Size = new System.Drawing.Size(350, 113);
             this.tbLog.TabIndex = 3;
-            this.tbLog.WordWrap = false;
             // 
             // MainForm
             // 
