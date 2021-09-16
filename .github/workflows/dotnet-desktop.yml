@@ -73,7 +73,7 @@ jobs:
 #       run: dotnet add package Newtonsoft.Json --version 12.0.3
 
     - name: Build Solution
-      run: msbuild $env:Solution_Name /t:Restore /p:platform="Any CPU" /p:Configuration=Release
+      run: msbuild $env:Solution_Name /p:platform="Any CPU" /p:Configuration=Release
 
     # Upload the package: https://github.com/marketplace/actions/upload-a-build-artifact
     - name: Upload build artifacts
