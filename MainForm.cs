@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.IO.Ports;
 using System.Net;
@@ -12,14 +13,33 @@ using Newtonsoft.Json;
 
 namespace LIMSCodeBarPrinter
 {
+    [SuppressMessage("ReSharper", "InconsistentNaming")]
+    [SuppressMessage("ReSharper", "UnassignedField.Global")]
     public class CodeBar
     {
         public string ids;
         public string biom;
     }
 
+    [SuppressMessage("ReSharper", "InconsistentNaming")]
+    [SuppressMessage("ReSharper", "UnassignedField.Global")]
+    public class Parcel
+    {
+        public string type;
+        public string id;
+    }
+
+    [SuppressMessage("ReSharper", "InconsistentNaming")]
+    [SuppressMessage("ReSharper", "UnassignedField.Global")]
+    public class BasicResponse
+    {
+        public string detail;
+    }
+
     public partial class MainForm : Form
     {
+        private static readonly string LimsUrl = ConfigurationSettings.AppSettings["LimsUrl"];
+        private static readonly string LimsToken = ConfigurationSettings.AppSettings["LimsToken"];
         private static readonly string PortName = ConfigurationSettings.AppSettings["SerialPort"];
         private static readonly string PrinterIpAddress = ConfigurationSettings.AppSettings["PrinterIPAddress"];
         private static readonly int PrinterIpPort = int.Parse(ConfigurationSettings.AppSettings["PrinterIPPort"]);
@@ -50,19 +70,59 @@ namespace LIMSCodeBarPrinter
         private void DataReceived(object sender, SerialDataReceivedEventArgs e)
         {
             var message = _port.ReadExisting();
+            Console.WriteLine($@"Получена нагрузка {message}");
+            // Пробуем привести полученную нагрузку от сканера ШК к типу партии биоматериала
+            try
+            {
+                Console.WriteLine($@"Пробуем нагрузку к типу партии биоматериала: {message}");
+                var parcel = JsonConvert.DeserializeObject<Parcel>(message);
+                
+                if (parcel.type == "parcel")
+                {
+                    tbOrder.Text = parcel.id;
+                    try
+                    {
+                        var response = GetWebRequestResponse($"/api/lism/checkpoint_parcel/{parcel.id}/");
+                        using (var sr = new StreamReader(response.GetResponseStream()))
+                        {
+                            var json = sr.ReadToEnd();
+                            var result = JsonConvert.DeserializeObject<BasicResponse>(json);
+                            tbLog.Text = result.detail;
+                        }
+                    }
+                    catch (WebException exception)
+                    {
+                        tbLog.Text = exception.Message;
+                    }
+                    return;
+                }
+            }
+            catch (Exception)
+            {
+                // ignored
+            }
             if (message.Length >= 20) return;
             this.tbOrder.Text = message;
             BtnPrintClick(sender, null);
         }
 
-        private void BtnPrintClick(object sender, EventArgs e)
+        private static HttpWebResponse GetWebRequestResponse(string endpoint)
         {
-            var url = $"http://10.74.22.2/api/lism/samples_by_order/{this.tbOrder.Text.Trim()}/";
+            var url = $"{LimsUrl}{endpoint}";
             var request = WebRequest.Create(url);
             request.ContentType = "application/json; charset=utf-8";
-            var response = (HttpWebResponse) request.GetResponse();
+            if (LimsToken.Length > 0)
+            {
+                request.Headers.Add("Authorization", $"Token {LimsToken}");
+            }
+            return (HttpWebResponse) request.GetResponse();
+        }
+        
+        private void BtnPrintClick(object sender, EventArgs e)
+        {
+            var response = GetWebRequestResponse($"/api/lism/samples_by_order/{this.tbOrder.Text.Trim()}/");
 
-            using (var sr = new StreamReader(response.GetResponseStream()))
+            using (var sr = new StreamReader(response.GetResponseStream() ?? throw new InvalidOperationException()))
             {
                 this.tbLog.Text = "";
                 var json = sr.ReadToEnd();
@@ -71,7 +131,7 @@ namespace LIMSCodeBarPrinter
                 {
                     codeBars = JsonConvert.DeserializeObject<List<CodeBar>>(json);
                 }
-                catch (Exception exception)
+                catch (Exception)
                 {
                     // ignored
                 }
